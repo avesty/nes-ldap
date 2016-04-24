@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+      http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+   http://www.springframework.org/schema/security
+   http://www.springframework.org/schema/security/spring-security-3.0.xsd">
+
+    <!-- This is where we configure Spring-Security  -->
+    <security:http auto-config="true" use-expressions="true" access-denied-page="/app/auth/denied">
+
+        <security:intercept-url pattern="/app/auth/login" access="permitAll"/>
+        <security:intercept-url pattern="/app/main/admin" access="hasRole('ROLE_ADMIN')"/>
+        <security:intercept-url pattern="/app/main/applications" access="hasRole('ROLE_USER')"/>
+
+        <security:form-login
+                login-page="/app/auth/login"
+                authentication-failure-url="/app/auth/login?error=true"
+                default-target-url="/app/main/applications"/>
+
+        <security:logout
+                invalidate-session="true"
+                logout-success-url="/app/auth/login"
+                logout-url="/app/auth/logout"/>
+
+    </security:http>
+
+    <security:authentication-manager>
+        <security:ldap-authentication-provider
+                user-search-filter="(uid={0})"
+                user-search-base="ou=users"
+                group-search-filter="(uniqueMember={0})"
+                group-search-base="ou=groups"
+                group-role-attribute="cn"
+                role-prefix="ROLE_">
+        </security:ldap-authentication-provider>
+    </security:authentication-manager>
+
+    <!-- Use an embedded LDAP server. We need to declare the location of the LDIF file
+      We also need to customize the root attribute default is "dc=springframework,dc=org"  -->
+    <security:ldap-server ldif="classpath:setup_data.ldif" root="o=mojo"/>
+
+</beans>
